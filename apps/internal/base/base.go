@@ -485,7 +485,7 @@ func (b Client) AcquireTokenOnBehalfOf(ctx context.Context, onBehalfOfParams Acq
 		Scopes:             onBehalfOfParams.Scopes,
 		RequestType:        accesstokens.ATConfidential,
 		Credential:         onBehalfOfParams.Credential,
-		UserAssertion:      "",
+		UserAssertion:      onBehalfOfParams.UserAssertion,
 		AuthorizationType:  authority.ATOnBehalfOf,
 		TenantID:           onBehalfOfParams.TenantID,
 		Claims:             onBehalfOfParams.Claims,
@@ -496,7 +496,7 @@ func (b Client) AcquireTokenOnBehalfOf(ctx context.Context, onBehalfOfParams Acq
 	if err == nil {
 		return ar, err
 	}
-	authParams, err := b.AuthParams.WithTenant("")
+	authParams, err := b.AuthParams.WithTenant(onBehalfOfParams.TenantID)
 	if err != nil {
 		return AuthResult{}, err
 	}
@@ -505,10 +505,10 @@ func (b Client) AcquireTokenOnBehalfOf(ctx context.Context, onBehalfOfParams Acq
 	authParams.ClientClaims = onBehalfOfParams.ClientClaims
 	authParams.Scopes = onBehalfOfParams.Scopes
 	authParams.UserAssertion = onBehalfOfParams.UserAssertion
-	if onBehalfOfParams.CacheKeyComponents == nil {
+	if onBehalfOfParams.CacheKeyComponents != nil {
 		authParams.CacheKeyComponents = onBehalfOfParams.CacheKeyComponents
 	}
-	if authParams.ExtraBodyParameters == nil {
+	if authParams.ExtraBodyParameters != nil {
 		authParams.ExtraBodyParameters = silentParameters.ExtraBodyParameters
 	}
 	token, err := b.Token.OnBehalfOf(ctx, authParams, onBehalfOfParams.Credential)
