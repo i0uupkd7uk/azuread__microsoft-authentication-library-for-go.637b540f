@@ -129,7 +129,9 @@ const (
 
 // AuthResultFromStorage creates an AuthResult from a storage token response (which is generated from the cache).
 func AuthResultFromStorage(storageTokenResponse storage.TokenResponse) (AuthResult, error) {
-	_ = storageTokenResponse.AccessToken.Validate()
+	if err := storageTokenResponse.AccessToken.Validate(); err != nil {
+		return AuthResult{}, fmt.Errorf("problem with access token in StorageTokenResponse: %w", err)
+	}
 	account := storageTokenResponse.Account
 	accessToken := storageTokenResponse.AccessToken.Secret
 	grantedScopes := strings.Split(storageTokenResponse.AccessToken.Scopes, scopeSeparator)
@@ -146,12 +148,12 @@ func AuthResultFromStorage(storageTokenResponse storage.TokenResponse) (AuthResu
 		Account:        account,
 		IDToken:        idToken,
 		AccessToken:    accessToken,
-		ExpiresOn:      storageTokenResponse.AccessToken.RefreshOn.T,
+		ExpiresOn:      storageTokenResponse.AccessToken.ExpiresOn.T,
 		GrantedScopes:  grantedScopes,
 		DeclinedScopes: nil,
 		Metadata: AuthResultMetadata{
 			TokenSource: TokenSourceCache,
-			RefreshOn:   storageTokenResponse.AccessToken.ExpiresOn.T,
+			RefreshOn:   storageTokenResponse.AccessToken.RefreshOn.T,
 		},
 	}, nil
 }
