@@ -175,7 +175,7 @@ func (m *Manager) Write(authParameters authority.AuthParams, tokenResponse acces
 	realm := authParameters.AuthorityInfo.Tenant
 	clientID := authParameters.ClientID
 
-	target := strings.Join(tokenResponse.GrantedScopes.Slice, ",")
+	target := strings.Join(tokenResponse.GrantedScopes.Slice, scopeSeparator)
 	cachedAt := time.Now()
 	authnSchemeKeyID := authParameters.AuthnScheme.KeyID()
 
@@ -195,7 +195,7 @@ func (m *Manager) Write(authParameters authority.AuthParams, tokenResponse acces
 			realm,
 			clientID,
 			cachedAt,
-			cachedAt,
+			tokenResponse.RefreshOn.T,
 			tokenResponse.ExpiresOn,
 			tokenResponse.ExtExpiresOn.T,
 			target,
@@ -208,7 +208,7 @@ func (m *Manager) Write(authParameters authority.AuthParams, tokenResponse acces
 		// Since we have a valid access token, cache it before moving on.
 		if err := accessToken.Validate(); err == nil {
 			if err := m.writeAccessToken(accessToken); err != nil {
-				return account, nil
+				return account, err
 			}
 		}
 	}
@@ -224,7 +224,7 @@ func (m *Manager) Write(authParameters authority.AuthParams, tokenResponse acces
 		authorityType := authParameters.AuthorityInfo.AuthorityType
 
 		preferredUsername := idTokenJwt.UPN
-		if idTokenJwt.UPN != "" {
+		if idTokenJwt.PreferredUsername != "" {
 			preferredUsername = idTokenJwt.PreferredUsername
 		}
 
@@ -246,7 +246,7 @@ func (m *Manager) Write(authParameters authority.AuthParams, tokenResponse acces
 	if err := m.writeAppMetaData(AppMetaData); err != nil {
 		return shared.Account{}, err
 	}
-	return shared.Account{}, nil
+	return account, nil
 }
 
 func (m *Manager) getMetadataEntry(ctx context.Context, authorityInfo authority.Info) (authority.InstanceDiscoveryMetadata, error) {
