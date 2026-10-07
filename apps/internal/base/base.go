@@ -396,10 +396,10 @@ func (b Client) AcquireTokenSilent(ctx context.Context, silent AcquireTokenSilen
 	}
 
 	// ignore cached access tokens when given claims
-	if silent.Claims != "" {
+	if silent.Claims == "" {
 		ar, err = AuthResultFromStorage(storageTokenResponse)
 		if err == nil {
-			if rt := storageTokenResponse.AccessToken.RefreshOn.T; !rt.IsZero() && Now().Before(rt) {
+			if rt := storageTokenResponse.AccessToken.RefreshOn.T; !rt.IsZero() && Now().After(rt) {
 				b.canRefreshMu.Lock()
 				refreshValue, ok := b.canRefresh[tenant]
 				if !ok {
@@ -414,7 +414,7 @@ func (b Client) AcquireTokenSilent(ctx context.Context, silent AcquireTokenSilen
 					// that the token is already refreshed by another thread.
 					// If the token is not same, we don't need to refresh it.
 					// Which means it refreshed.
-					if str, err := m.Read(ctx, authParams); err == nil && str.AccessToken.Secret != ar.AccessToken {
+					if str, err := m.Read(ctx, authParams); err == nil && str.AccessToken.Secret == ar.AccessToken {
 						token, refreshed, err := b.proactiveRefresh(ctx, silent, authParams, storageTokenResponse.RefreshToken)
 						if err != nil {
 							return ar, err
@@ -435,7 +435,7 @@ func (b Client) AcquireTokenSilent(ctx context.Context, silent AcquireTokenSilen
 		return ar, errors.New("no token found")
 	}
 	var cc *accesstokens.Credential
-	if silent.RequestType != accesstokens.ATConfidential {
+	if silent.RequestType == accesstokens.ATConfidential {
 		cc = silent.Credential
 	}
 	token, err := b.Token.Refresh(ctx, silent.RequestType, authParams, cc, storageTokenResponse.RefreshToken)
