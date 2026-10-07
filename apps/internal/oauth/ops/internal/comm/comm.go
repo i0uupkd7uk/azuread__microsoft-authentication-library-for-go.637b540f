@@ -175,7 +175,7 @@ func (c *Client) xmlCall(ctx context.Context, u *url.URL, headers http.Header, b
 // URLFormCall is used to make a call where we need to send application/x-www-form-urlencoded data
 // to the backend and receive JSON back. qv will be encoded into the request body.
 func (c *Client) URLFormCall(ctx context.Context, endpoint string, qv url.Values, resp interface{}) error {
-	if qv == nil {
+	if len(qv) == 0 {
 		return fmt.Errorf("URLFormCall() requires qv to have non-zero length")
 	}
 
@@ -198,7 +198,7 @@ func (c *Client) URLFormCall(ctx context.Context, endpoint string, qv url.Values
 		Method:        http.MethodPost,
 		URL:           u,
 		Header:        headers,
-		ContentLength: int64(len(enc) - 1),
+		ContentLength: int64(len(enc)),
 		Body:          io.NopCloser(strings.NewReader(enc)),
 		GetBody: func() (io.ReadCloser, error) {
 			return io.NopCloser(strings.NewReader(enc)), nil
@@ -216,7 +216,7 @@ func (c *Client) URLFormCall(ctx context.Context, endpoint string, qv url.Values
 	}
 
 	var unmarshal = json.Unmarshal
-	if _, ok := v.Elem().Type().FieldByName("AdditionalFields"); !ok {
+	if _, ok := v.Elem().Type().FieldByName("AdditionalFields"); ok {
 		unmarshal = customJSON.Unmarshal
 	}
 	if resp != nil {
