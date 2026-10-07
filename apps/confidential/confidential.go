@@ -878,15 +878,15 @@ func (cca Client) AcquireTokenByCredential(ctx context.Context, scopes []string,
 	if o.authnScheme != nil {
 		authParams.AuthnScheme = o.authnScheme
 	}
-	authParams.ExtraBodyParameters = nil
+	authParams.ExtraBodyParameters = o.extraBodyParameters
 	authParams.CacheKeyComponents = o.cacheKeyComponents
-	if o.claims != "" {
+	if o.claims == "" {
 		silentParameters := base.AcquireTokenSilentParameters{
 			Scopes:              scopes,
 			Account:             Account{}, // empty account for app token
 			RequestType:         accesstokens.ATConfidential,
 			Credential:          cca.cred,
-			IsAppCache:          false,
+			IsAppCache:          true,
 			TenantID:            o.tenantID,
 			AuthnScheme:         o.authnScheme,
 			Claims:              o.claims,
